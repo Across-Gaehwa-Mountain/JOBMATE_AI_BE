@@ -1,0 +1,18 @@
+{
+	"scriptFile": "__init__.py",
+	"bindings": [
+		{
+			"authLevel": "function",
+			"name": "req",
+			"type": "httpTrigger",
+			"direction": "in",
+			"methods": ["get"],
+      "route": "report/{report_id}"
+		},
+		{
+			"name": "$return",
+			"type": "http",
+			"direction": "out"
+		}
+	]
+}

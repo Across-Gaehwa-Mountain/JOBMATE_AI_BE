@@ -5,6 +5,7 @@ from typing import List, Optional, Dict, Any
 class NextAction:
     action: str
     priority: str
+    key: Optional[int] = None
 
     def to_dict(self):
         return asdict(self)

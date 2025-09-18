@@ -1,8 +1,10 @@
 import logging
 import json
+import uuid
 import azure.functions as func
 import azure.durable_functions as df
 from shared_code.models import AnalysisResult, Feedback, NextAction, FileAnalysisResult
+from shared_code.azure_search_storage import AnalysisResultStorage
 
 def orchestrator_function(context: df.DurableOrchestrationContext):
     """
@@ -57,9 +59,46 @@ def orchestrator_function(context: df.DurableOrchestrationContext):
         file_analysis=file_analysis_results
     )
 
+    # next_actions의 각 item에 key와 isChecked 필드 추가
+    analysis_result_dict = analysis_result.to_dict()
+    if 'next_actions' in analysis_result_dict:
+        for index, action in enumerate(analysis_result_dict['next_actions']):
+            action['key'] = index
+            action['isChecked'] = False
+
+    # --- 4단계: 분석 결과를 Cosmos DB에 저장 ---
+    try:
+        # 사용자 ID와 리포트 ID 추출 (요청에서 가져오거나 생성)
+        user_id = analysis_request.get("user_id", "anonymous_user")
+        report_id = analysis_request.get("report_id", str(uuid.uuid4()))
+        
+        # Cosmos DB 저장소 초기화 및 저장
+        storage = AnalysisResultStorage()
+        save_result = storage.save_analysis_result(
+            user_id=user_id,
+            report_id=report_id,
+            analysis_result=analysis_result_dict
+        )
+        
+        if save_result.get("success"):
+            logging.info(f"Analysis result saved successfully to Cosmos DB: {save_result.get('document_id')}")
+        else:
+            logging.warning(f"Failed to save analysis result to Cosmos DB: {save_result.get('error')}")
+            
+    except Exception as e:
+        # DB 저장 실패가 전체 프로세스를 중단시키지 않도록 예외 처리
+        logging.error(f"Error saving analysis result to Cosmos DB: {str(e)}")
+        logging.info("Continuing with analysis result return despite storage error")
+
     logging.info("Orchestration completed successfully.")
     
     # Durable Function은 결과를 JSON 직렬화 가능한 객체로 반환해야 합니다.
-    return analysis_result.to_dict()
+    # return 시에도 key와 isChecked 필드가 포함된 결과를 반환
+    # output에 report_id 포함
+    analysis_result_dict["report_id"] = report_id
+    analysis_result_dict.pop("file_analysis")
+    
+    # Durable Functions 프레임워크가 자동으로 메타데이터를 추가
+    return analysis_result_dict
 
 main = df.Orchestrator.create(orchestrator_function)

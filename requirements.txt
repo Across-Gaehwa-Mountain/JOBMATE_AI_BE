@@ -4,3 +4,4 @@ azure-functions-durable
 openai
 azure-ai-documentintelligence
 azure-storage-blob
+azure-search-documents
