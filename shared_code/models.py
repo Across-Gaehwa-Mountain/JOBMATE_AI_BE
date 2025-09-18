@@ -11,6 +11,7 @@ class NextAction:
     completed: bool
     priority: str
     key: Optional[int] = None
+    isChecked: bool = False
 
     def to_dict(self):
         return asdict(self)

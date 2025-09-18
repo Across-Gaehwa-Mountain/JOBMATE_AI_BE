@@ -1,7 +1,7 @@
 import logging
 import azure.functions as func
 import json
-from shared_code.azure_search_storage import AnalysisResultStorage
+from shared_code.mongodb_storage import AnalysisResultStorage
 
 
 async def main(req: func.HttpRequest) -> func.HttpResponse:
@@ -29,7 +29,7 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
         
         logging.info(f"Retrieving reports for user_id: {user_id}")
         
-        # Cosmos DB에서 사용자의 모든 분석 결과 조회
+        # MongoDB에서 사용자의 모든 분석 결과 조회
         storage = AnalysisResultStorage()
         results = storage.get_analysis_results_by_user(user_id)
         

@@ -4,7 +4,7 @@ import uuid
 import azure.functions as func
 import azure.durable_functions as df
 from shared_code.models import AnalysisResult, Feedback, NextAction, FileAnalysisResult
-from shared_code.azure_search_storage import AnalysisResultStorage
+from shared_code.mongodb_storage import AnalysisResultStorage
 
 def orchestrator_function(context: df.DurableOrchestrationContext):
     """
@@ -70,9 +70,9 @@ def orchestrator_function(context: df.DurableOrchestrationContext):
     try:
         # 사용자 ID와 리포트 ID 추출 (요청에서 가져오거나 생성)
         user_id = analysis_request.get("user_id", "anonymous_user")
-        report_id = analysis_request.get("report_id", str(uuid.uuid4()))
+        report_id = str(uuid.uuid4())
         
-        # Cosmos DB 저장소 초기화 및 저장
+        # MongoDB 저장소 초기화 및 저장
         storage = AnalysisResultStorage()
         save_result = storage.save_analysis_result(
             user_id=user_id,
@@ -81,13 +81,13 @@ def orchestrator_function(context: df.DurableOrchestrationContext):
         )
         
         if save_result.get("success"):
-            logging.info(f"Analysis result saved successfully to Cosmos DB: {save_result.get('document_id')}")
+            logging.info(f"Analysis result saved successfully to MongoDB: {save_result.get('document_id')}")
         else:
-            logging.warning(f"Failed to save analysis result to Cosmos DB: {save_result.get('error')}")
+            logging.warning(f"Failed to save analysis result to MongoDB: {save_result.get('error')}")
             
     except Exception as e:
         # DB 저장 실패가 전체 프로세스를 중단시키지 않도록 예외 처리
-        logging.error(f"Error saving analysis result to Cosmos DB: {str(e)}")
+        logging.error(f"Error saving analysis result to MongoDB: {str(e)}")
         logging.info("Continuing with analysis result return despite storage error")
 
     logging.info("Orchestration completed successfully.")

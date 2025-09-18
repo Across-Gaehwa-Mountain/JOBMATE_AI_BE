@@ -1,7 +1,7 @@
 import logging
 import json
 import azure.functions as func
-from shared_code.azure_search_storage import AnalysisResultStorage
+from shared_code.mongodb_storage import AnalysisResultStorage
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     """
@@ -90,7 +90,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     mimetype="application/json"
                 )
         
-        # Cosmos DB 저장소 초기화 및 체크 상태 업데이트
+        # MongoDB 저장소 초기화 및 체크 상태 업데이트
         storage = AnalysisResultStorage()
         update_result = storage.update_next_action_checked_status(
             user_id=user_id,
