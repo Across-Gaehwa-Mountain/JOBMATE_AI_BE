@@ -1,4 +1,4 @@
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from typing import List, Optional, Dict, Any
 
 @dataclass
@@ -15,6 +15,8 @@ class Feedback:
     good_points: List[str]
     improvement_points: List[str]
     missed_points: List[str]
+    mentor_comment:List[str]
+    reasoning_summary:List[str]
     
     def to_dict(self):
         return asdict(self)
@@ -46,8 +48,8 @@ class AnalysisRequest:
 class AnalysisResult:
     score: int
     feedback: Feedback
-    suggested_questions: List[str]
-    next_actions: List[NextAction]
+    suggested_questions: List[str] = field(default_factory=list)
+    next_actions: List[NextAction] = field(default_factory=list)
     file_analysis: Optional[List[Dict[str, Any]]] = None  # 여러 파일 분석 결과
 
     def to_dict(self):

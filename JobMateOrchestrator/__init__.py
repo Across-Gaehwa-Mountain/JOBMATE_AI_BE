@@ -34,9 +34,9 @@ def orchestrator_function(context: df.DurableOrchestrationContext):
         "file_names": file_names
     }
     
-    evaluation_task = context.call_activity("ComprehensionEvaluationAgent", analysis_data)
-    question_generation_task = context.call_activity("QuestionGenerationAgent", analysis_data)
-    action_item_task = context.call_activity("ActionItemSuggestionAgent", analysis_data)
+    evaluation_task = context.call_activity("ComprehensionEvaluationAgent", analysis_data) #5,6
+    question_generation_task = context.call_activity("QuestionGenerationAgent", analysis_request) #7
+    action_item_task = context.call_activity("ActionItemSuggestionAgent", analysis_request) #8(개선+actionItem)
 
     # 모든 병렬 작업이 완료될 때까지 대기
     results = yield context.task_all([evaluation_task, question_generation_task, action_item_task])
