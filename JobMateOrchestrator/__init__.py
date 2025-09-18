@@ -17,24 +17,26 @@ def orchestrator_function(context: df.DurableOrchestrationContext):
     
     # --- 2단계: 핵심 분석 에이전트 병렬 실행 ---
     logging.info("Starting parallel agent execution.")
-    evaluation_task = context.call_activity("ComprehensionEvaluationAgent", analysis_request)
-    question_generation_task = context.call_activity("QuestionGenerationAgent", analysis_request)
-    action_item_task = context.call_activity("ActionItemSuggestionAgent", analysis_request)
+    evaluation_task = context.call_activity("ComprehensionEvaluationAgent", analysis_request) #5,6
+    # question_generation_task = context.call_activity("QuestionGenerationAgent", analysis_request) #7
+    # action_item_task = context.call_activity("ActionItemSuggestionAgent", analysis_request) #8(개선+actionItem)
 
     # 모든 병렬 작업이 완료될 때까지 대기
-    results = yield context.task_all([evaluation_task, question_generation_task, action_item_task])
+    # results = yield context.task_all([evaluation_task, question_generation_task, action_item_task])
+    results = yield context.task_all([evaluation_task])
     logging.info("Parallel agent execution completed.")
 
     # --- 3단계: 결과 취합 ---
     evaluation_result = results[0]
-    question_result = results[1]
-    action_item_result = results[2]
+    # question_result = results[1]
+    # action_item_result = results[2]
 
     analysis_result = AnalysisResult(
         score=evaluation_result['score'],
-        feedback=Feedback(**evaluation_result),
-        suggested_questions=question_result,
-        next_actions=[NextAction(**action) for action in action_item_result]
+        feedback=Feedback(**evaluation_result)
+    
+        # ,suggested_questions=question_result,
+        # next_actions=[NextAction(**action) for action in action_item_result]
     )
 
     logging.info("Orchestration completed successfully.")
