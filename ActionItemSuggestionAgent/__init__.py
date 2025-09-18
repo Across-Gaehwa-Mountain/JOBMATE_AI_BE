@@ -12,6 +12,9 @@ async def main(request: dict) -> List[dict]:
     logging.info("Executing Action Item Suggestion Agent.")
     logging.info(f"Request data: {request}")
 
+    # Initialize ai_response to avoid UnboundLocalError
+    ai_response = None
+
     try:
         # Azure OpenAI 클라이언트 초기화
         client = AzureOpenAI(
@@ -95,7 +98,9 @@ async def main(request: dict) -> List[dict]:
         except (json.JSONDecodeError, ValueError) as e:
             # JSON 파싱 실패 시 기본 할 일 반환
             logging.warning(f"Failed to parse AI response as JSON: {e}")
-            logging.warning(f"Raw AI response: {ai_response}")
+            # Check if ai_response was set before logging
+            response_info = f"Raw AI response: {ai_response}" if ai_response is not None else "No response received"
+            logging.warning(response_info)
             actions = [
                 NextAction(action="문서의 핵심 개념을 다시 한번 정리해보기", priority="높음"),
                 NextAction(action="이해가 부족한 부분에 대한 추가 자료 찾아보기", priority="중간"),

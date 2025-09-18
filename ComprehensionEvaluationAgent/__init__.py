@@ -33,6 +33,9 @@ def main(request: dict) -> dict:
         # 클라이언트 초기화 실패 시, 명확한 에러 반환
         return _create_error_feedback("Azure OpenAI client is not initialized. Check environment variables.")
 
+    # Initialize ai_response_content to avoid UnboundLocalError
+    ai_response_content = None
+    
     try:
         document_content = request.get("document_content", "")
         user_summary = request.get("user_summary", "")
@@ -109,17 +112,15 @@ def main(request: dict) -> dict:
         logging.info("Successfully parsed AI response and created Feedback object.")
         return feedback.to_dict()
 
-    except Exception as e:
-        logging.error(f"Failed to parse AI response: {e}. Response: {ai_response_content}")
-        return _create_error_feedback("AI 응답을 처리하는 중 오류가 발생했습니다.")
-
     except APIError as e:
         logging.error(f"Azure OpenAI API Error: {e.status_code} - {e.message}")
         return _create_error_feedback(f"서비스 연결 중 오류가 발생했습니다 (API Error: {e.status_code}).")
 
     except Exception as e:
-        logging.error(f"An unexpected error occurred in ComprehensionEvaluationAgent: {str(e)}")
-        return _create_error_feedback("알 수 없는 오류가 발생했습니다. 관리자에게 문의하세요.")
+        # Check if ai_response_content was set before logging
+        response_info = f"Response: {ai_response_content}" if ai_response_content is not None else "No response received"
+        logging.error(f"Failed to process request: {e}. {response_info}")
+        return _create_error_feedback("AI 응답을 처리하는 중 오류가 발생했습니다.")
 
 def _parse_ai_response(response_content: str) -> dict:
     """
