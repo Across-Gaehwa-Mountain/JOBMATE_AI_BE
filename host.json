@@ -20,7 +20,7 @@
 	},
 	"extensions": {
 		"durableTask": {
-			"hubName": "JobMateHubBinna"
+			"hubName": "JobMateHubSkye"
 		}
 	}
 }
