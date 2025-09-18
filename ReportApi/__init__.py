@@ -53,18 +53,18 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
         
         # 결과 포맷팅
         formatted_result = {
-            "document_id": result.get("id"),
-            "user_id": result.get("userId"),
+            # "document_id": result.get("id"),
+            # "user_id": result.get("userId"),
             "report_id": result.get("reportId"),
-            "analysis_result": result.get("value"),
-            "creation_datetime": result.get("creation_datetime")
+            "analysis_result": result.get("value")
+            # "creation_datetime": result.get("creation_datetime")
         }
         
         logging.info(f"Successfully retrieved report for user: {user_id}, report: {report_id}")
         
         return create_korean_json_response({
             "success": True,
-            "report": formatted_result
+            "analysis_result": formatted_result
         }, status_code=200)
         
     except Exception as e:
