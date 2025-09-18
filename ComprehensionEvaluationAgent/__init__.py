@@ -50,7 +50,9 @@ async def main(request: dict) -> dict:
         - 점수는 0-100 사이의 정수
         - good_points, improvement_points, missed_points는 문자열 배열
         - 다른 텍스트나 설명 없이 JSON만 응답
-        - JSON 형식을 정확히 지켜주세요"""
+        - JSON 형식을 정확히 지켜주세요
+        - 응답은 반드시 유효한 JSON 형식이어야 합니다
+        - 예시: {"score": 75, "good_points": ["점1"], "improvement_points": ["점2"], "missed_points": ["점3"]}"""
 
         # 사용자 프롬프트
         user_prompt = f"""문서 내용:
@@ -81,11 +83,24 @@ async def main(request: dict) -> dict:
         try:
             # AI 응답에서 JSON 부분만 추출
             ai_response_clean = ai_response.strip()
+            
+            # 다양한 마크다운 형식 제거
             if ai_response_clean.startswith('```json'):
                 ai_response_clean = ai_response_clean[7:]
+            elif ai_response_clean.startswith('```'):
+                ai_response_clean = ai_response_clean[3:]
+            
             if ai_response_clean.endswith('```'):
                 ai_response_clean = ai_response_clean[:-3]
+            
             ai_response_clean = ai_response_clean.strip()
+            
+            # JSON 객체 찾기
+            start_idx = ai_response_clean.find('{')
+            end_idx = ai_response_clean.rfind('}')
+            
+            if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+                ai_response_clean = ai_response_clean[start_idx:end_idx+1]
             
             evaluation_data = json.loads(ai_response_clean)
             feedback = Feedback(
@@ -99,6 +114,7 @@ async def main(request: dict) -> dict:
             # JSON 파싱 실패 시 기본값 사용
             logging.warning(f"Failed to parse AI response as JSON: {e}")
             logging.warning(f"Raw AI response: {ai_response}")
+            logging.warning(f"Cleaned AI response: {ai_response_clean}")
             feedback = Feedback(
                 score=75,
                 good_points=["AI 응답을 처리하는 중 오류가 발생했습니다."],
