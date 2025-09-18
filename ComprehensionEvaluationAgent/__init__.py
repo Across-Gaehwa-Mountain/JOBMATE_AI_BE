@@ -9,6 +9,7 @@ async def main(request: dict) -> dict:
     이해도 점수와 피드백을 생성하는 에이전트입니다.
     """
     logging.info("Executing Comprehension Evaluation Agent.")
+    logging.info(f"Request data: {request}")
 
     try:
         # 환경 변수 확인
@@ -36,7 +37,8 @@ async def main(request: dict) -> dict:
 
         # 시스템 프롬프트
         system_prompt = """당신은 전문적인 문서 이해도 평가자입니다. 
-        주어진 문서와 사용자의 요약을 분석하여 다음 형식의 JSON 응답을 제공해주세요:
+        주어진 문서와 사용자의 요약을 분석하여 **반드시** 다음 형식의 JSON 응답만 제공해주세요:
+        
         {
             "score": 85,
             "good_points": ["잘 파악한 점들"],
@@ -44,7 +46,11 @@ async def main(request: dict) -> dict:
             "missed_points": ["놓친 중요한 점들"]
         }
         
-        점수는 0-100 사이의 정수로, good_points, improvement_points, missed_points는 각각 문자열 배열로 제공해주세요."""
+        **중요**: 
+        - 점수는 0-100 사이의 정수
+        - good_points, improvement_points, missed_points는 문자열 배열
+        - 다른 텍스트나 설명 없이 JSON만 응답
+        - JSON 형식을 정확히 지켜주세요"""
 
         # 사용자 프롬프트
         user_prompt = f"""문서 내용:
@@ -63,7 +69,6 @@ async def main(request: dict) -> dict:
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            temperature=0.3,
             max_completion_tokens=1000
         )
         logging.info("Azure OpenAI API call completed successfully")
@@ -74,16 +79,26 @@ async def main(request: dict) -> dict:
         
         # JSON 파싱 시도
         try:
-            evaluation_data = json.loads(ai_response)
+            # AI 응답에서 JSON 부분만 추출
+            ai_response_clean = ai_response.strip()
+            if ai_response_clean.startswith('```json'):
+                ai_response_clean = ai_response_clean[7:]
+            if ai_response_clean.endswith('```'):
+                ai_response_clean = ai_response_clean[:-3]
+            ai_response_clean = ai_response_clean.strip()
+            
+            evaluation_data = json.loads(ai_response_clean)
             feedback = Feedback(
                 score=evaluation_data.get("score", 0),
                 good_points=evaluation_data.get("good_points", []),
                 improvement_points=evaluation_data.get("improvement_points", []),
                 missed_points=evaluation_data.get("missed_points", [])
             )
-        except json.JSONDecodeError:
+            logging.info("Successfully parsed AI response as JSON")
+        except json.JSONDecodeError as e:
             # JSON 파싱 실패 시 기본값 사용
-            logging.warning("Failed to parse AI response as JSON, using default values")
+            logging.warning(f"Failed to parse AI response as JSON: {e}")
+            logging.warning(f"Raw AI response: {ai_response}")
             feedback = Feedback(
                 score=75,
                 good_points=["AI 응답을 처리하는 중 오류가 발생했습니다."],

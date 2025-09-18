@@ -27,17 +27,18 @@ async def main(request: dict) -> List[dict]:
         system_prompt = """당신은 도움이 되는 프로젝트 매니저입니다. 
         주어진 문서와 사용자 요약을 분석하여 구체적이고 실행 가능한 다음 할 일을 우선순위와 함께 제안해주세요.
         
-        응답은 다음 형식의 JSON 배열로 제공해주세요:
+        **반드시** 다음 형식의 JSON 배열만 응답해주세요:
         [
-            {"action": "구체적인 할 일", "priority": "높음/중간/낮음"},
-            {"action": "구체적인 할 일", "priority": "높음/중간/낮음"}
+            {"action": "구체적인 할 일", "priority": "높음"},
+            {"action": "구체적인 할 일", "priority": "중간"},
+            {"action": "구체적인 할 일", "priority": "낮음"}
         ]
         
-        할 일은 다음과 같은 특징을 가져야 합니다:
-        - 구체적이고 실행 가능한 행동
-        - 문서 내용과 사용자 요약을 바탕으로 한 개선점
+        **중요**:
+        - 할 일은 구체적이고 실행 가능한 행동
         - 우선순위는 "높음", "중간", "낮음" 중 하나
-        - 2-4개의 할 일을 제안"""
+        - 2-4개의 할 일을 제안
+        - 다른 텍스트나 설명 없이 JSON만 응답"""
 
         # 사용자 프롬프트
         user_prompt = f"""문서 내용:
@@ -55,7 +56,6 @@ async def main(request: dict) -> List[dict]:
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            temperature=0.5,
             max_completion_tokens=800
         )
 
@@ -65,7 +65,15 @@ async def main(request: dict) -> List[dict]:
         
         # JSON 파싱 시도
         try:
-            actions_data = json.loads(ai_response)
+            # AI 응답에서 JSON 부분만 추출
+            ai_response_clean = ai_response.strip()
+            if ai_response_clean.startswith('```json'):
+                ai_response_clean = ai_response_clean[7:]
+            if ai_response_clean.endswith('```'):
+                ai_response_clean = ai_response_clean[:-3]
+            ai_response_clean = ai_response_clean.strip()
+            
+            actions_data = json.loads(ai_response_clean)
             if isinstance(actions_data, list):
                 actions = []
                 for action_data in actions_data:
@@ -77,14 +85,16 @@ async def main(request: dict) -> List[dict]:
                         actions.append(action)
                 
                 if actions:
+                    logging.info("Successfully parsed AI response as JSON")
                     return [action.to_dict() for action in actions]
                 else:
                     raise ValueError("No valid actions found")
             else:
                 raise ValueError("Response is not a list")
-        except (json.JSONDecodeError, ValueError):
+        except (json.JSONDecodeError, ValueError) as e:
             # JSON 파싱 실패 시 기본 할 일 반환
-            logging.warning("Failed to parse AI response as JSON, using default actions")
+            logging.warning(f"Failed to parse AI response as JSON: {e}")
+            logging.warning(f"Raw AI response: {ai_response}")
             actions = [
                 NextAction(action="문서의 핵심 개념을 다시 한번 정리해보기", priority="높음"),
                 NextAction(action="이해가 부족한 부분에 대한 추가 자료 찾아보기", priority="중간"),

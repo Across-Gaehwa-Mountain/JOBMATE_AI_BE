@@ -50,7 +50,6 @@ async def main(request: dict) -> List[str]:
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            temperature=0.7,
             max_completion_tokens=800
         )
 
