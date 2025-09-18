@@ -34,7 +34,6 @@ def orchestrator_function(context: df.DurableOrchestrationContext):
     analysis_result = AnalysisResult(
         score=0,
         feedback="Some text",
-    
         suggested_questions=question_result,
         next_actions=[NextAction(**action) for action in action_item_result]
     )
