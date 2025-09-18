@@ -6,7 +6,7 @@ from typing import List
 from openai import AzureOpenAI
 from shared_code.models import Question
 
-async def main(request: dict) -> List[Question]:
+async def main(request: dict) -> List[dict]:
     """
     심층적인 질문을 생성하는 에이전트입니다.
     """
@@ -107,23 +107,23 @@ async def main(request: dict) -> List[Question]:
                         category=q.get("category", "기타")
                     )
                 )
-            return questions
+            return [q.to_dict() for q in questions]
         except (json.JSONDecodeError, ValueError, TypeError) as e:
             logging.warning(f"Failed to parse AI response as JSON: {e}")
             logging.warning(f"AI response content: {ai_response}")
             # 기본 질문 예시
             return [
-                Question(id=str(uuid.uuid4()), question="오류가 발생하여 기본 질문을 출력하였습니다.", importance="medium", category="기타"),
-                Question(id=str(uuid.uuid4()), question="이 문서의 핵심 개념을 실제 상황에 어떻게 적용할 수 있을까요?", importance="high", category="적용"),
-                Question(id=str(uuid.uuid4()), question="문서에서 제시된 내용에 대해 다른 관점에서 생각해볼 수 있는 부분은 무엇인가요?", importance="medium", category="비판적 사고"),
-                Question(id=str(uuid.uuid4()), question="이 내용을 바탕으로 추가로 학습해야 할 영역은 무엇이라고 생각하시나요?", importance="low", category="학습")
+                Question(id=str(uuid.uuid4()), question="오류가 발생하여 기본 질문을 출력하였습니다.", importance="medium", category="기타").to_dict(),
+                Question(id=str(uuid.uuid4()), question="이 문서의 핵심 개념을 실제 상황에 어떻게 적용할 수 있을까요?", importance="high", category="적용").to_dict(),
+                Question(id=str(uuid.uuid4()), question="문서에서 제시된 내용에 대해 다른 관점에서 생각해볼 수 있는 부분은 무엇인가요?", importance="medium", category="비판적 사고").to_dict(),
+                Question(id=str(uuid.uuid4()), question="이 내용을 바탕으로 추가로 학습해야 할 영역은 무엇이라고 생각하시나요?", importance="low", category="학습").to_dict()
             ]
 
     except Exception as e:
         logging.error(f"Error in QuestionGenerationAgent: {str(e)}")
         # 오류 발생 시 기본 질문 반환
         return [
-            Question(id=str(uuid.uuid4()), question="API 호출 중 오류가 발생했습니다. 서비스 연결을 확인해주세요.", importance="medium", category="기타"),
-            Question(id=str(uuid.uuid4()), question="문서의 핵심 내용을 다시 한번 정리해보시겠어요?", importance="high", category="개념"),
-            Question(id=str(uuid.uuid4()), question="추가로 궁금한 점이 있으시면 언제든 말씀해주세요.", importance="low", category="기타")
+            Question(id=str(uuid.uuid4()), question="API 호출 중 오류가 발생했습니다. 서비스 연결을 확인해주세요.", importance="medium", category="기타").to_dict(),
+            Question(id=str(uuid.uuid4()), question="문서의 핵심 내용을 다시 한번 정리해보시겠어요?", importance="high", category="개념").to_dict(),
+            Question(id=str(uuid.uuid4()), question="추가로 궁금한 점이 있으시면 언제든 말씀해주세요.", importance="low", category="기타").to_dict()
         ]

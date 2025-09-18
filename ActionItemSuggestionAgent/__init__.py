@@ -90,18 +90,17 @@ async def main(request: dict) -> List[dict]:
             
             actions_data = json.loads(ai_response_clean)
             if isinstance(actions_data, list):
-                actions = []
+                actions: List[dict] = []
                 for action_data in actions_data:
                     if isinstance(action_data, dict) and "action" in action_data and "priority" in action_data:
-                        action = NextAction(
-                            action=action_data["action"],
-                            priority=action_data["priority"]
-                        )
-                        actions.append(action)
+                        actions.append({
+                            "action": action_data["action"],
+                            "priority": action_data["priority"]
+                        })
                 
                 if actions:
                     logging.info("Successfully parsed AI response as JSON")
-                    return [action.to_dict() for action in actions]
+                    return actions
                 else:
                     raise ValueError("No valid actions found")
             else:
@@ -113,17 +112,17 @@ async def main(request: dict) -> List[dict]:
             response_info = f"Raw AI response: {ai_response}" if ai_response is not None else "No response received"
             logging.warning(response_info)
             actions = [
-                NextAction(action="문서의 핵심 개념을 다시 한번 정리해보기", priority="높음"),
-                NextAction(action="이해가 부족한 부분에 대한 추가 자료 찾아보기", priority="중간"),
-                NextAction(action="학습한 내용을 실제 상황에 적용해보기", priority="낮음")
+                {"action": "문서의 핵심 개념을 다시 한번 정리해보기", "priority": "높음"},
+                {"action": "이해가 부족한 부분에 대한 추가 자료 찾아보기", "priority": "중간"},
+                {"action": "학습한 내용을 실제 상황에 적용해보기", "priority": "낮음"}
             ]
-            return [action.to_dict() for action in actions]
+            return actions
 
     except Exception as e:
         logging.error(f"Error in ActionItemSuggestionAgent: {str(e)}")
         # 오류 발생 시 기본 할 일 반환
         actions = [
-            NextAction(action="API 호출 중 오류가 발생했습니다. 서비스 연결을 확인해주세요.", priority="높음"),
-            NextAction(action="문서를 다시 읽어보시기 바랍니다.", priority="중간")
+            {"action": "API 호출 중 오류가 발생했습니다. 서비스 연결을 확인해주세요.", "priority": "높음"},
+            {"action": "문서를 다시 읽어보시기 바랍니다.", "priority": "중간"}
         ]
-        return [action.to_dict() for action in actions]
+        return actions
