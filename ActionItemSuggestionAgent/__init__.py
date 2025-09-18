@@ -142,10 +142,9 @@ async def main(request: dict) -> List[dict]:
                     priority="low"
                 )
             ]
-            return actions
+            return [action.to_dict() for action in actions]
 
     except Exception:
-        import uuid
         actions = [
             NextAction(
                 id=str(uuid.uuid4()),
@@ -157,4 +156,4 @@ async def main(request: dict) -> List[dict]:
                 priority="medium"
             )
         ]
-        return actions
+        return [action.to_dict() for action in actions]
