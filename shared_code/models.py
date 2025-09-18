@@ -40,6 +40,16 @@ class FileAnalysisResult:
         return asdict(self)
 
 @dataclass
+class Question:
+    id: str
+    question: str
+    importance: str
+    category: str
+
+    def to_dict(self):
+        return asdict(self)
+
+@dataclass
 class AnalysisRequest:
     """분석 요청을 담는 데이터 클래스"""
     file_names: List[str]
