@@ -1,4 +1,4 @@
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from typing import List, Optional, Dict, Any
 
 @dataclass
@@ -46,9 +46,9 @@ class AnalysisRequest:
 class AnalysisResult:
     score: int
     feedback: Feedback
-    suggested_questions: List[str]
-    next_actions: List[NextAction]
-    file_analysis: Optional[List[Dict[str, Any]]] = None  # 여러 파일 분석 결과
+    suggested_questions: List[str] = field(default_factory=list)
+    next_actions: List[NextAction] = field(default_factory=list)
+    file_analysis: Optional[List[Dict[str, Any]]] = field(default_factory=list)  # 여러 파일 분석 결과
 
     def to_dict(self):
         # asdict는 중첩된 dataclass도 재귀적으로 dict로 변환해줍니다.

@@ -31,17 +31,38 @@ async def main(req: func.HttpRequest, starter: str) -> func.HttpResponse:
                 status_code=400
             )
         
-        # 요청 데이터 구조 검증
-        required_fields = ['file_names', 'files', 'user_summary']
-        for field in required_fields:
-            if field not in request_data:
-                logging.warning(f"Missing required field: {field}")
-                return func.HttpResponse(
-                    f"Missing required field: {field}", 
-                    status_code=400
-                )
-        
-        logging.info(f"Request data validated successfully. Files count: {len(request_data.get('files', []))}")
+        # 요청 데이터 구조 검증 (SAS URL 또는 Base64 중 하나 허용)
+        user_summary = request_data.get('user_summary')
+        files = request_data.get('files', []) or []
+        blob_urls = request_data.get('blob_urls', []) or []
+        file_names = request_data.get('file_names', []) or []
+
+        if not user_summary:
+            logging.warning("Missing required field: user_summary")
+            return func.HttpResponse(
+                "Missing required field: user_summary", 
+                status_code=400
+            )
+
+        if (not files) and (not blob_urls):
+            logging.warning("Either 'files' (base64) or 'blob_urls' (SAS) must be provided")
+            return func.HttpResponse(
+                "Either 'files' (base64) or 'blob_urls' (SAS) must be provided", 
+                status_code=400
+            )
+
+        # file_names가 제공되면 길이 일치 검증 (제공 안하면 에이전트에서 유추)
+        payload_count = len(files) if files else len(blob_urls)
+        if file_names and len(file_names) != payload_count:
+            logging.warning("Length of file_names must match files/blob_urls")
+            return func.HttpResponse(
+                "Length of file_names must match files/blob_urls", 
+                status_code=400
+            )
+
+        logging.info(
+            f"Request data validated. files={len(files)}, blob_urls={len(blob_urls)}, file_names={len(file_names)}"
+        )
         
     except ValueError as e:
         logging.error(f"JSON parsing error: {str(e)}")

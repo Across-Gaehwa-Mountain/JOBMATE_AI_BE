@@ -14,12 +14,14 @@ def orchestrator_function(context: df.DurableOrchestrationContext):
     # 입력 데이터 분리
     file_names = analysis_request.get("file_names", [])
     files = analysis_request.get("files", [])
+    blob_urls = analysis_request.get("blob_urls", [])
     user_summary = analysis_request.get("user_summary", "")
 
     # --- 1단계: 콘텐츠 인식 에이전트 호출 (파일 정보만 전달) ---
     file_analysis_request = {
         "file_names": file_names,
-        "files": files
+        "files": files,
+        "blob_urls": blob_urls
     }
     processed_content = yield context.call_activity("ContentAwareAgent", file_analysis_request)
     
@@ -30,7 +32,8 @@ def orchestrator_function(context: df.DurableOrchestrationContext):
     analysis_data = {
         "user_summary": user_summary,
         "file_analysis": processed_content.get("file_analysis", []),
-        "extracted_content": processed_content.get("extracted_content", ""),
+        # ComprehensionEvaluationAgent가 기대하는 키 이름으로 전달
+        "document_content": processed_content.get("extracted_content", ""),
         "file_names": file_names
     }
     
