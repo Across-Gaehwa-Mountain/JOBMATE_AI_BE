@@ -3,7 +3,12 @@ from typing import List, Optional, Dict, Any
 
 @dataclass
 class NextAction:
-    action: str
+    id: str
+    title: str
+    description: str
+    category: str
+    estimatedTime: str
+    completed: bool
     priority: str
 
     def to_dict(self):
