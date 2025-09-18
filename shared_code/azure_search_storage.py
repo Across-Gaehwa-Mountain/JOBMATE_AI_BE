@@ -43,6 +43,12 @@ class AnalysisResultStorage:
         if not self.endpoint or not self.key:
             raise ValueError("Azure AI Search endpoint and key must be provided in environment variables")
         
+        try:
+            safe_endpoint = self.endpoint.split('//')[-1].split('/')[0]
+        except Exception:
+            safe_endpoint = self.endpoint
+        logging.info(f"[Search] Initializing clients | endpoint={safe_endpoint} | index={self.index_name}")
+
         self.credential = AzureKeyCredential(self.key)
         self.search_client = SearchClient(
             endpoint=self.endpoint,
@@ -150,6 +156,34 @@ class AnalysisResultStorage:
                     return None
                 return value
             
+            # suggested_questions는 인덱스 스키마에서 Collection(String)으로 정의됨
+            # 에이전트에서 dict 리스트로 올 수 있으므로 질문 텍스트만 추출해 문자열 리스트로 정규화
+            raw_sq = analysis_result.get("suggested_questions", [])
+            normalized_suggested_questions: List[str] = []
+            if isinstance(raw_sq, list):
+                for item in raw_sq:
+                    if isinstance(item, dict):
+                        q = item.get("question")
+                        if isinstance(q, str) and q:
+                            normalized_suggested_questions.append(q)
+                    elif isinstance(item, str):
+                        normalized_suggested_questions.append(item)
+
+            # 로깅: 입력 요약
+            try:
+                feedback = analysis_result.get("feedback", {}) or {}
+                gp_len = len(feedback.get("good_points", []) or [])
+                ip_len = len(feedback.get("improvement_points", []) or [])
+                mp_len = len(feedback.get("missed_points", []) or [])
+                na_len = len(analysis_result.get("next_actions", []) or [])
+                sq_len = len(normalized_suggested_questions)
+                logging.info(
+                    f"[Search] Preparing document | id={document_id} | score={analysis_result.get('score')} | "
+                    f"good={gp_len} improve={ip_len} missed={mp_len} next_actions={na_len} suggested_q={sq_len}"
+                )
+            except Exception:
+                pass
+
             document = {
                 "id": document_id,
                 "userId": user_id,
@@ -161,13 +195,18 @@ class AnalysisResultStorage:
                 "missed_points": safe_list(analysis_result.get("feedback", {}).get("missed_points", [])),
                 "mentor_comment": safe_list(analysis_result.get("feedback", {}).get("mentor_comment", [])),
                 "reasoning_summary": safe_list(analysis_result.get("feedback", {}).get("reasoning_summary", [])),
-                "suggested_questions": safe_list(analysis_result.get("suggested_questions", [])),
+                "suggested_questions": safe_list(normalized_suggested_questions),
                 "next_actions": json.dumps(analysis_result.get("next_actions", [])),
                 "analysis_result_json": json.dumps(analysis_result)
             }
             
             # Azure AI Search에 문서 저장
+            logging.info(f"[Search] Uploading document to index '{self.index_name}'")
             result = self.search_client.upload_documents([document])
+            try:
+                logging.info(f"[Search] Upload result raw: {result}")
+            except Exception:
+                pass
             
             if result[0].succeeded:
                 logging.info(f"Analysis result saved successfully: Document ID={document_id}, User ID={user_id}, Report ID={report_id}")
