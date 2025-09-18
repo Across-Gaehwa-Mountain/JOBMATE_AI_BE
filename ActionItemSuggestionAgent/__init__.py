@@ -10,6 +10,7 @@ async def main(request: dict) -> List[dict]:
     다음 할 일을 제안하는 에이전트입니다.
     """
     logging.info("Executing Action Item Suggestion Agent.")
+    logging.info(f"Request data: {request}")
 
     try:
         # Azure OpenAI 클라이언트 초기화
