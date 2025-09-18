@@ -76,17 +76,12 @@ async def main(request: dict) -> List[Question]:
                 ],
                 max_completion_tokens=800
             )
-            print(f"response: {response}")
-            print(f"response.choices: {getattr(response, 'choices', None)}")
             ai_response = None
             if response and hasattr(response, "choices") and response.choices:
                 choice = response.choices[0]
-                print(f"choice: {choice}")
                 if hasattr(choice, "message") and hasattr(choice.message, "content"):
                     ai_response = choice.message.content
-            print(f"ai_response: {ai_response}")
         except Exception as e:
-            print(f"OpenAI API 호출 중 예외 발생: {e}")
             logging.error(f"OpenAI API 호출 중 예외 발생: {e}")
             ai_response = None
 
