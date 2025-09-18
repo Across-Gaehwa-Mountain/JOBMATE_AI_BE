@@ -3,7 +3,12 @@ from typing import List, Optional, Dict, Any
 
 @dataclass
 class NextAction:
-    action: str
+    id: str
+    title: str
+    description: str
+    category: str
+    estimatedTime: str
+    completed: bool
     priority: str
     key: Optional[int] = None
 
@@ -31,6 +36,16 @@ class FileAnalysisResult:
     document_structure: Dict[str, Any]
     confidence_score: float
     processing_status: str
+
+    def to_dict(self):
+        return asdict(self)
+
+@dataclass
+class Question:
+    id: str
+    question: str
+    importance: str
+    category: str
 
     def to_dict(self):
         return asdict(self)
