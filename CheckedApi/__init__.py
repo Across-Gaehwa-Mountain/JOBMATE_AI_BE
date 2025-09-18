@@ -2,6 +2,7 @@ import logging
 import json
 import azure.functions as func
 from shared_code.mongodb_storage import AnalysisResultStorage
+from shared_code.json_utils import create_korean_json_response, create_korean_error_response
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     """
@@ -24,50 +25,34 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         
         # 필수 파라미터 검증
         if not user_id:
-            return func.HttpResponse(
-                json.dumps({
-                    "success": False,
-                    "error": "Missing required parameter",
-                    "message": "user_id is required"
-                }),
+            return create_korean_error_response(
+                "user_id is required",
                 status_code=400,
-                mimetype="application/json"
+                additional_data={"error": "Missing required parameter"}
             )
         
         if not report_id:
-            return func.HttpResponse(
-                json.dumps({
-                    "success": False,
-                    "error": "Missing required parameter", 
-                    "message": "report_id is required"
-                }),
+            return create_korean_error_response(
+                "report_id is required",
                 status_code=400,
-                mimetype="application/json"
+                additional_data={"error": "Missing required parameter"}
             )
         
         if not next_action_idx:
-            return func.HttpResponse(
-                json.dumps({
-                    "success": False,
-                    "error": "Missing required parameter",
-                    "message": "next_action_idx is required"
-                }),
+            return create_korean_error_response(
+                "next_action_idx is required",
                 status_code=400,
-                mimetype="application/json"
+                additional_data={"error": "Missing required parameter"}
             )
         
         # next_action_idx를 정수로 변환
         try:
             next_action_idx = int(next_action_idx)
         except ValueError:
-            return func.HttpResponse(
-                json.dumps({
-                    "success": False,
-                    "error": "Invalid parameter type",
-                    "message": "next_action_idx must be an integer"
-                }),
+            return create_korean_error_response(
+                "next_action_idx must be an integer",
                 status_code=400,
-                mimetype="application/json"
+                additional_data={"error": "Invalid parameter type"}
             )
         
         # is_checked 파라미터 처리 (기본값: False)
@@ -80,14 +65,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             elif is_checked_param.lower() == 'false':
                 is_checked = False
             else:
-                return func.HttpResponse(
-                    json.dumps({
-                        "success": False,
-                        "error": "Invalid parameter value",
-                        "message": "is_checked must be a boolean value (true/false)"
-                    }),
+                return create_korean_error_response(
+                    "is_checked must be a boolean value (true/false)",
                     status_code=400,
-                    mimetype="application/json"
+                    additional_data={"error": "Invalid parameter value"}
                 )
         
         # MongoDB 저장소 초기화 및 체크 상태 업데이트
@@ -100,11 +81,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         )
         
         if update_result.get("success"):
-            return func.HttpResponse(
-                json.dumps(update_result),
-                status_code=200,
-                mimetype="application/json"
-            )
+            return create_korean_json_response(update_result, status_code=200)
         else:
             # 에러 메시지에 따라 적절한 HTTP 상태 코드 설정
             error = update_result.get("error", "")
@@ -115,20 +92,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             else:
                 status_code = 500
             
-            return func.HttpResponse(
-                json.dumps(update_result),
-                status_code=status_code,
-                mimetype="application/json"
-            )
+            return create_korean_json_response(update_result, status_code=status_code)
             
     except Exception as e:
         logging.error(f"Unexpected error in CheckedApi: {str(e)}")
-        return func.HttpResponse(
-            json.dumps({
-                "success": False,
-                "error": "Internal server error",
-                "message": f"An unexpected error occurred: {str(e)}"
-            }),
-            status_code=500,
-            mimetype="application/json"
+        return create_korean_error_response(
+            f"An unexpected error occurred: {str(e)}",
+            status_code=500
         )

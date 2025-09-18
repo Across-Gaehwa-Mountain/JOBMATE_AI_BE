@@ -2,6 +2,7 @@ import logging
 import azure.functions as func
 import json
 from shared_code.mongodb_storage import AnalysisResultStorage
+from shared_code.json_utils import create_korean_json_response, create_korean_error_response
 
 
 async def main(req: func.HttpRequest) -> func.HttpResponse:
@@ -18,13 +19,10 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
         user_id = req.params.get('user_id')
         if not user_id:
             logging.warning("Missing required parameter: user_id")
-            return func.HttpResponse(
-                json.dumps({
-                    "error": "Missing required parameter: user_id",
-                    "message": "user_id is required as a query parameter"
-                }),
+            return create_korean_error_response(
+                "user_id is required as a query parameter",
                 status_code=400,
-                mimetype="application/json"
+                additional_data={"error": "Missing required parameter: user_id"}
             )
         
         logging.info(f"Retrieving reports for user_id: {user_id}")
@@ -47,24 +45,16 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
         
         logging.info(f"Successfully retrieved {len(formatted_results)} reports for user: {user_id}")
         
-        return func.HttpResponse(
-            json.dumps({
-                "success": True,
-                "user_id": user_id,
-                "total_count": len(formatted_results),
-                "reports": formatted_results
-            }),
-            status_code=200,
-            mimetype="application/json"
-        )
+        return create_korean_json_response({
+            "success": True,
+            "user_id": user_id,
+            "total_count": len(formatted_results),
+            "reports": formatted_results
+        }, status_code=200)
         
     except Exception as e:
         logging.error(f"Error retrieving reports for user {user_id}: {str(e)}")
-        return func.HttpResponse(
-            json.dumps({
-                "error": "Internal server error",
-                "message": str(e)
-            }),
-            status_code=500,
-            mimetype="application/json"
+        return create_korean_error_response(
+            str(e),
+            status_code=500
         )
