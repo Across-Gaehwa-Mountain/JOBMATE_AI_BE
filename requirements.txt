@@ -1,0 +1,3 @@
+# For more information about dependency management, see https://aka.ms/functions-python-dependency-management
+azure-functions
+azure-functions-durable
