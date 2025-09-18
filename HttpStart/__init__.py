@@ -52,10 +52,20 @@ async def main(req: func.HttpRequest, starter: str) -> func.HttpResponse:
             
             # files 처리 (File 객체들을 base64로 변환)
             files = []
-            file_objects = form_data.getlist('files')
+            
+            if not req.files:
+                logging.warning("No files provided in form data")
+                return func.HttpResponse(
+                    "Missing required field: files", 
+                    status_code=400
+                )
+            
+            # req.files에서 'files' 키로 파일들을 가져오기
+            file_objects = req.files.getlist('files')
+            logging.info(f"file_objects type: {type(file_objects)}")
             
             if not file_objects:
-                logging.warning("No files provided in form data")
+                logging.warning("No files found with key 'files'")
                 return func.HttpResponse(
                     "Missing required field: files", 
                     status_code=400

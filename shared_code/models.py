@@ -12,11 +12,11 @@ class NextAction:
 @dataclass
 class Feedback:
     score: int
-    good_points: List[str]
-    improvement_points: List[str]
-    missed_points: List[str]
-    mentor_comment:List[str]
-    reasoning_summary:List[str]
+    good_points: List[str] = field(default_factory=list)
+    improvement_points: List[str] = field(default_factory=list)
+    missed_points: List[str] = field(default_factory=list)
+    mentor_comment:List[str] = field(default_factory=list)
+    reasoning_summary:List[str] = field(default_factory=list)
     
     def to_dict(self):
         return asdict(self)

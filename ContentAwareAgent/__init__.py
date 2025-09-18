@@ -51,9 +51,12 @@ def main(req) -> Dict[str, Any]:
         # Azure Document Intelligence 설정
         endpoint = os.environ.get("AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT")
         key = os.environ.get("AZURE_DOCUMENT_INTELLIGENCE_KEY")
+        model_id = os.environ.get("AZURE_DOCUMENT_INTELLIGENCE_MODEL_ID", "prebuilt-layout")
         
         if not endpoint or not key:
             raise ValueError("Azure Document Intelligence endpoint and key must be configured")
+        
+        logging.info(f"Using Document Intelligence model: {model_id}")
         
         # Document Intelligence 클라이언트 초기화
         client = DocumentIntelligenceClient(
@@ -101,14 +104,14 @@ def main(req) -> Dict[str, Any]:
                 
                 # 분석 요청 생성
                 analyze_request = AnalyzeDocumentRequest(
-                    bytes_source=file_stream.getvalue(),
-                    content_format=DocumentContentFormat.MARKDOWN
+                    bytes_source=file_stream.getvalue()
                 )
                 
                 # 문서 분석 실행
                 poller = client.begin_analyze_document(
-                    model_id="prebuilt-layout",  # 레이아웃 분석 모델 사용
-                    analyze_request=analyze_request
+                    model_id=model_id,
+                    body=analyze_request,
+                    output_content_format=DocumentContentFormat.MARKDOWN
                 )
                 
                 result = poller.result()

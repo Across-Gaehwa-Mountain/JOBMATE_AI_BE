@@ -29,23 +29,23 @@ def orchestrator_function(context: df.DurableOrchestrationContext):
     # 분석 에이전트에 전달할 데이터 구성 (파일 분석 결과 + 사용자 요약)
     analysis_data = {
         "user_summary": user_summary,
-        "file_analysis": processed_content.get("file_analysis", []),
-        "extracted_content": processed_content.get("extracted_content", ""),
-        "file_names": file_names
+        # "file_analysis": processed_content.get("file_analysis", []),
+        "document_content": processed_content.get("extracted_content", ""),
     }
     
     evaluation_task = context.call_activity("ComprehensionEvaluationAgent", analysis_data) #5,6
-    question_generation_task = context.call_activity("QuestionGenerationAgent", analysis_request) #7
-    action_item_task = context.call_activity("ActionItemSuggestionAgent", analysis_request) #8(개선+actionItem)
+    # question_generation_task = context.call_activity("QuestionGenerationAgent", analysis_request) #7
+    # action_item_task = context.call_activity("ActionItemSuggestionAgent", analysis_request) #8(개선+actionItem)
 
     # 모든 병렬 작업이 완료될 때까지 대기
-    results = yield context.task_all([evaluation_task, question_generation_task, action_item_task])
+    # results = yield context.task_all([evaluation_task, question_generation_task, action_item_task])
+    results = yield context.task_all([evaluation_task])
     logging.info("Parallel agent execution completed.")
 
     # --- 3단계: 결과 취합 ---
     evaluation_result = results[0]
-    question_result = results[1]
-    action_item_result = results[2]
+    # question_result = results[1]
+    # action_item_result = results[2]
 
     # 파일 분석 결과 추출 (여러 파일 분석 결과)
     file_analysis_results = processed_content.get("file_analysis", [])
@@ -53,8 +53,8 @@ def orchestrator_function(context: df.DurableOrchestrationContext):
     analysis_result = AnalysisResult(
         score=evaluation_result['score'],
         feedback=Feedback(**evaluation_result),
-        suggested_questions=question_result,
-        next_actions=[NextAction(**action) for action in action_item_result],
+        suggested_questions=[],
+        next_actions=[],
         file_analysis=file_analysis_results
     )
 
