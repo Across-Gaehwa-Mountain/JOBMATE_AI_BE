@@ -227,13 +227,9 @@ class AnalysisResultStorage:
                 }
             
             # 체크 상태 업데이트
-            next_actions[next_action_idx]["isChecked"] = is_checked
-            
-            # MongoDB에서 문서 업데이트
             result = self.collection.update_one(
-                {"userId": user_id, "reportId": report_id},
-                {"$set": {"analysis_result.next_actions": next_actions}}
-            )
+            {"userId": user_id, "reportId": report_id},
+            {"$set": {f"analysis_result.next_actions.{next_action_idx}.isChecked": is_checked}})
             
             if result.modified_count > 0:
                 logging.info(f"Next action checked status updated successfully: User={user_id}, Report={report_id}, Index={next_action_idx}, Checked={is_checked}")

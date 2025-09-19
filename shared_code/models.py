@@ -1,4 +1,5 @@
 from dataclasses import dataclass, asdict, field
+from turtle import title
 from typing import List, Optional, Dict, Any
 
 @dataclass
@@ -64,6 +65,7 @@ class AnalysisRequest:
 
 @dataclass
 class AnalysisResult:
+    title: str
     score: int
     feedback: Feedback
     suggested_questions: List[str] = field(default_factory=list)
