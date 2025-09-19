@@ -18,6 +18,7 @@ class NextAction:
 
 @dataclass
 class Feedback:
+    title: str
     score: int
     good_points: List[str] = field(default_factory=list)
     improvement_points: List[str] = field(default_factory=list)

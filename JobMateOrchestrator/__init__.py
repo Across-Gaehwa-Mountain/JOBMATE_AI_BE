@@ -52,6 +52,7 @@ def orchestrator_function(context: df.DurableOrchestrationContext):
     file_analysis_results = processed_content.get("file_analysis", [])
 
     analysis_result = AnalysisResult(
+        title= evaluation_result['title'],
         score=evaluation_result['score'],
         feedback=Feedback(**evaluation_result),
         suggested_questions=question_result,

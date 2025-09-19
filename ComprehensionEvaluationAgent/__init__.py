@@ -71,7 +71,7 @@ def main(request: dict) -> dict:
 
             ### 출력 형식 (반드시 JSON만 사용)
             ```json
-            {
+            {   "title": "<문서의 핵심을 제목으로 붙여주세요>",
                 "score": <0-100 정수>,
                 "good_points": ["<구체적 칭찬 — 무엇을 잘했는가>"],
                 "improvement_points": ["<구체적 지적 + 개선 방법 — 행동 가능한 문장>"],
@@ -102,6 +102,7 @@ def main(request: dict) -> dict:
         evaluation_data = _parse_ai_response(ai_response_content)
         
         feedback = Feedback(
+            title=evaluation_data.get("title", ""),
             score=evaluation_data.get("score", 0),
             good_points=evaluation_data.get("good_points", []),
             improvement_points=evaluation_data.get("improvement_points", []),
