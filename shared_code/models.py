@@ -64,6 +64,7 @@ class AnalysisRequest:
 
 @dataclass
 class AnalysisResult:
+    title: str
     score: int
     feedback: Feedback
     suggested_questions: List[str] = field(default_factory=list)
