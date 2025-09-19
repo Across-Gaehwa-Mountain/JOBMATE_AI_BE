@@ -205,6 +205,7 @@ def _extract_structured_data(text: str) -> dict:
 def _create_error_feedback(message: str) -> dict:
     """오류 발생 시 일관된 피드백 객체를 생성하는 헬퍼 함수"""
     feedback = Feedback(
+        title="분석 오류",
         score=0,
         good_points=[],
         improvement_points=[message],

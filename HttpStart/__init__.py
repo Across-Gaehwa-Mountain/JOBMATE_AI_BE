@@ -50,6 +50,9 @@ async def main(req: func.HttpRequest, starter: str) -> func.HttpResponse:
                     status_code=400
                 )
             
+            # user_id 가져오기 (선택적)
+            user_id = form_data.get('user_id', 'anonymous_user')
+            
             # files 처리 (File 객체들을 base64로 변환)
             files = []
             
@@ -81,7 +84,8 @@ async def main(req: func.HttpRequest, starter: str) -> func.HttpResponse:
             request_data = {
                 'file_names': file_names,
                 'files': files,
-                'user_summary': user_summary
+                'user_summary': user_summary,
+                'user_id': user_id
             }
             
         elif content_type.startswith('application/json'):
@@ -93,6 +97,10 @@ async def main(req: func.HttpRequest, starter: str) -> func.HttpResponse:
                     "Request body cannot be empty", 
                     status_code=400
                 )
+            
+            # user_id가 없으면 기본값 설정
+            if 'user_id' not in request_data:
+                request_data['user_id'] = 'anonymous_user'
         else:
             logging.warning(f"Unsupported content-type: {content_type}")
             return func.HttpResponse(
@@ -110,7 +118,7 @@ async def main(req: func.HttpRequest, starter: str) -> func.HttpResponse:
                     status_code=400
                 )
         
-        logging.info(f"Request data validated successfully. Files count: {len(request_data.get('files', []))}")
+        logging.info(f"Request data validated successfully. Files count: {len(request_data.get('files', []))}, User ID: {request_data.get('user_id', 'not provided')}")
         
     except ValueError as e:
         logging.error(f"JSON parsing error: {str(e)}")

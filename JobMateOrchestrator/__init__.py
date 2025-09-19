@@ -72,6 +72,7 @@ def orchestrator_function(context: df.DurableOrchestrationContext):
         # 사용자 ID와 리포트 ID 추출 (요청에서 가져오거나 생성)
         user_id = analysis_request.get("user_id", "anonymous_user")
         report_id = str(uuid.uuid4())
+        logging.info(f"[Orch] Saving analysis result for user_id: '{user_id}', report_id: '{report_id}'")
         
         # MongoDB 저장소 초기화 및 저장
         storage = AnalysisResultStorage()
