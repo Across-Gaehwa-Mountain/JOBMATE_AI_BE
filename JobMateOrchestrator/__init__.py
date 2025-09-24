@@ -5,6 +5,8 @@ import azure.functions as func
 import azure.durable_functions as df
 from shared_code.models import AnalysisResult, Feedback, NextAction, FileAnalysisResult
 from shared_code.mongodb_storage import AnalysisResultStorage
+from SpeechToTextAgent import stt_for_files
+import os
 
 def orchestrator_function(context: df.DurableOrchestrationContext):
     """
@@ -13,17 +15,27 @@ def orchestrator_function(context: df.DurableOrchestrationContext):
     logging.info("Orchestration started.")
     analysis_request = context.get_input()
     
+
     # 입력 데이터 분리
     file_names = analysis_request.get("file_names", [])
     files = analysis_request.get("files", [])
     user_summary = analysis_request.get("user_summary", "")
 
+    # Azure Speech 서비스 설정 (환경변수 또는 설정에서 가져오세요)
+    AZURE_SPEECH_KEY = os.environ.get('AZURE_SPEECH_KEY', 'YOUR_SPEECH_KEY')
+    AZURE_SPEECH_REGION = os.environ.get('AZURE_SPEECH_REGION', 'YOUR_REGION')
+    # files에 음성/영상 파일이 있으면 STT 처리
+    stt_texts = stt_for_files(file_names, files, AZURE_SPEECH_KEY, AZURE_SPEECH_REGION)
+
     # --- 1단계: 콘텐츠 인식 에이전트 호출 (파일 정보만 전달) ---
     file_analysis_request = {
-        "file_names": file_names,
+        "file_names": file_names,                                                  
         "files": files
     }
     processed_content = yield context.call_activity("ContentAwareAgent", file_analysis_request)
+    # STT 결과를 processed_content에 추가
+    if stt_texts:
+        processed_content["stt_texts"] = stt_texts
     
     # --- 2단계: CEA 순차 실행 ---
     logging.info("Starting ComprehensionEvaluationAgent execution.")
@@ -31,6 +43,7 @@ def orchestrator_function(context: df.DurableOrchestrationContext):
         "user_summary": user_summary,
         "file_analysis": processed_content.get("file_analysis", []),
         "document_content": processed_content.get("extracted_content", ""),
+        "stt_texts": processed_content.get("stt_texts", []),
     }
     
     try:

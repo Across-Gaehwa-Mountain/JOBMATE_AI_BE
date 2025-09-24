@@ -4,6 +4,44 @@ import azure.durable_functions as df
 import json
 import base64
 
+# 파일 크기 제한 상수 (10MB)
+MAX_TOTAL_FILE_SIZE = 10 * 1024 * 1024  # 10MB in bytes
+
+def validate_file_sizes(file_objects):
+    """
+    모든 파일의 총 크기가 10MB를 넘는지 검사합니다.
+    
+    Args:
+        file_objects: 업로드된 파일 객체들의 리스트
+        
+    Raises:
+        ValueError: 총 파일 크기가 10MB를 넘을 때
+    """
+    total_size = 0
+    file_sizes = []
+    
+    for file_obj in file_objects:
+        if file_obj.filename:  # 파일이 실제로 업로드된 경우
+            # 파일 크기 계산 (파일 포인터를 처음으로 이동)
+            file_obj.seek(0, 2)  # 파일 끝으로 이동
+            file_size = file_obj.tell()  # 현재 위치 (파일 크기)
+            file_obj.seek(0)  # 파일 시작으로 다시 이동
+            
+            total_size += file_size
+            file_sizes.append({
+                'filename': file_obj.filename,
+                'size': file_size
+            })
+    
+    logging.info(f"Total file size: {total_size} bytes ({total_size / (1024*1024):.2f} MB)")
+    logging.info(f"File sizes: {file_sizes}")
+    
+    if total_size > MAX_TOTAL_FILE_SIZE:
+        error_msg = f"Total file size ({total_size} bytes, {total_size / (1024*1024):.2f} MB) exceeds the maximum allowed size of {MAX_TOTAL_FILE_SIZE} bytes ({MAX_TOTAL_FILE_SIZE / (1024*1024):.2f} MB)"
+        logging.error(error_msg)
+        logging.error(f"Individual file sizes: {file_sizes}")
+        raise ValueError(error_msg)
+
 async def main(req: func.HttpRequest, starter: str) -> func.HttpResponse:
     """
     프론트엔드로부터 최초의 분석 요청을 받는 API 진입점입니다.
@@ -72,6 +110,16 @@ async def main(req: func.HttpRequest, starter: str) -> func.HttpResponse:
                 return func.HttpResponse(
                     "Missing required field: files", 
                     status_code=400
+                )
+            
+            # 파일 크기 검증 (10MB 제한)
+            try:
+                validate_file_sizes(file_objects)
+            except ValueError as e:
+                logging.error(f"File size validation failed: {str(e)}")
+                return func.HttpResponse(
+                    str(e), 
+                    status_code=413  # Payload Too Large
                 )
             
             for file_obj in file_objects:
