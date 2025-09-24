@@ -5,3 +5,5 @@ openai
 azure-ai-documentintelligence
 azure-storage-blob
 pymongo
+azure-cognitiveservices-speech
+requests
