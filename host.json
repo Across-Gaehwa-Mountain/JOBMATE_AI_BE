@@ -20,7 +20,20 @@
 	},
 	"extensions": {
 		"durableTask": {
-			"hubName": "JobMateHubLea"
+			"hubName": "JobMateHubLea",
+			"maxConcurrentActivityFunctions": 10,
+			"maxConcurrentOrchestratorFunctions": 10,
+			"extendedSessionsEnabled": false,
+			"extendedSessionIdleTimeoutInSeconds": 30,
+			"storageProvider": {
+				"type": "AzureStorage",
+				"connectionStringName": "AzureWebJobsStorage",
+				"controlQueueBatchSize": 32,
+				"partitionCount": 4,
+				"controlQueueVisibilityTimeout": "00:05:00",
+				"workItemQueueVisibilityTimeout": "00:05:00",
+				"maxQueuePollingInterval": "00:00:30"
+			}
 		}
 	}
 }
